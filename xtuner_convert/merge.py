@@ -44,10 +44,20 @@ def merge(model_path, adapter_hf_path, save_dir):
         model_path,
         trust_remote_code=True,
         encode_special_tokens=True)
+    try:
+        try_method(adapter_hf_path, args, 'auto', model, save_dir)
+    except:
+        try_method(adapter_hf_path, args, 'cuda', model, save_dir)
+
+    tokenizer.save_pretrained(save_dir)
+    print('Merged All done!')
+
+
+def try_method(adapter_hf_path, args, device, model, save_dir):
     model_unmerged = PeftModel.from_pretrained(
         model,
         adapter_hf_path,
-        device_map='auto',
+        device_map=device,
         torch_dtype=torch.float16,
         offload_folder=args.offload_folder,
         is_trainable=False)
@@ -55,8 +65,6 @@ def merge(model_path, adapter_hf_path, save_dir):
     print(f'Merged Saving to {save_dir}...')
     model_merged.save_pretrained(
         save_dir, max_shard_size=args.max_shard_size)
-    tokenizer.save_pretrained(save_dir)
-    print('Merged All done!')
 
 
 if __name__ == '__main__':
